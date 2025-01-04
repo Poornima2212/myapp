@@ -15,22 +15,24 @@ class StringCalculator
       nums = parse_numbers(numbers, delimiter)
       validate_no_negatives(nums)
   
-      nums.sum
+      nums.reject { |n| n > 1000 }.sum
     end
   
     private
   
     def extract_delimiter_and_numbers(numbers)
       if numbers.start_with?("//")
-        custom_delimiter, numbers = numbers[2..].split("\n", 2)
-        [Regexp.escape(custom_delimiter), numbers]
+        delimiters, numbers = numbers[2..].split("\n", 2)
+        custom_delimiters = delimiters.scan(/\[(.*?)\]/).flatten
+        delimiter_regex = custom_delimiters.any? ? /#{custom_delimiters.map { |d| Regexp.escape(d) }.join('|')}/ : Regexp.escape(delimiters)
+        [delimiter_regex, numbers]
       else
-        [/\n|,/, numbers]
+        [/[,\n]/, numbers]
       end
     end
   
     def parse_numbers(numbers, delimiter)
-      numbers.split(/#{delimiter}/).map(&:to_i)
+      numbers.split(delimiter).map(&:to_i)
     end
   
     def validate_no_negatives(nums)
@@ -70,13 +72,25 @@ RSpec.describe StringCalculator do
         expect(calculator.add("//;\n1;2")).to eq(3)
     end
 
+    it "handles delimiters of any length" do
+      expect(calculator.add("//[***]\n1***2***3")).to eq(6)
+    end
+
+    it "handles multiple delimiters" do
+      expect(calculator.add("//[*][%]\n1*2%3")).to eq(6)
+    end
+
+    it "ignores numbers greater than 1000" do
+      expect(calculator.add("2,1001")).to eq(2)
+    end
+
     it "throws an exception when negative numbers are provided" do
         expect { calculator.add("1,-2,3,-4") }.to raise_error("negative numbers not allowed: -2, -4")
     end
   end
 
   describe "#call_count" do
-    it "returns  when no add operation has been performed" do
+    it "returns 0 when no add operation has been performed" do
         expect(calculator.call_count).to eq(0)
     end
     
