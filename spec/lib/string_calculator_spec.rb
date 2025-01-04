@@ -3,7 +3,7 @@ require 'rails_helper'
 class StringCalculator
   def add(numbers)
     return 0 if numbers.empty?
-    numbers.split(",").map(&:to_i).sum
+    numbers.split(/[\n,]/).map(&:to_i).sum
   end
 end
 
@@ -27,6 +27,11 @@ RSpec.describe StringCalculator do
     it "returns the sum of multiple numbers separated by commas" do
         calculator = StringCalculator.new
         expect(calculator.add("1,2,3,4")).to eq(10)
+    end
+
+    it "returns the sum of numbers separated by commas or new lines" do
+        calculator = StringCalculator.new
+        expect(calculator.add("1\n2,3")).to eq(6)
     end
   end
 end
